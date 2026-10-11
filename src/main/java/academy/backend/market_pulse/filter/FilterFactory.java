@@ -1,7 +1,6 @@
 package academy.backend.market_pulse.filter;
 
 import academy.backend.market_pulse.model.Currency;
-import academy.backend.market_pulse.model.Stock;
 
 import java.math.BigDecimal;
 
@@ -25,28 +24,18 @@ public final class FilterFactory {
                             + "--price-op/--price");
         }
         if (type != null) {
-            return i -> i.getType().equalsIgnoreCase(type);
+            return new TypeFilter(type);
         }
         if (ticker != null) {
-            return i -> i.getTicker().toUpperCase().contains(ticker.toUpperCase());
+            return new TickerFilter(ticker);
         }
         if (currency != null) {
-            return i -> i.getCurrency() == currency;
+            return new CurrencyFilter(currency);
         }
         if (priceOperator != null) {
-            return i -> {
-                if (!(i instanceof Stock stock)) {
-                    return false;
-                }
-                int comparison = stock.getDividendYield().compareTo(price);
-                return switch (priceOperator) {
-                    case GE -> comparison >= 0;
-                    case LE -> comparison <= 0;
-                    case EQ -> comparison == 0;
-                };
-            };
-        }
-        return _ -> true;
+            return new PriceFilter(priceOperator, price);
+        };
+        return NoOpFilter.NO_FILTER;
     }
 
     private static int count(boolean... flags) {
