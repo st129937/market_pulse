@@ -34,6 +34,5 @@ import academy.backend.market_pulse.model.Instrument;
  * }</pre>
  */
 public interface InstrumentFilter {
-
     boolean matches(Instrument instrument);
 }
