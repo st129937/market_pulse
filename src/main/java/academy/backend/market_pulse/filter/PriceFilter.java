@@ -11,6 +11,7 @@ import java.math.BigDecimal;
  * роли цены — дивидендная доходность ({@link Stock#getDividendYield()}), единственный числовой
  * атрибут акции на этом этапе проекта.
  */
+
 public class PriceFilter implements InstrumentFilter {
 
     public enum Operator {

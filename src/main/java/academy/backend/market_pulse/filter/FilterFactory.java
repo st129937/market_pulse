@@ -17,12 +17,6 @@ public final class FilterFactory {
 
     public static InstrumentFilter create(String type, String ticker, Currency currency,
                                            PriceFilter.Operator priceOperator, BigDecimal price) {
-        int criteriaCount = count(type != null, ticker != null, currency != null, priceOperator != null);
-        if (criteriaCount > 1) {
-            throw new IllegalArgumentException(
-                    "Одновременно можно задать только один критерий отбора: --type, --ticker, --currency или "
-                            + "--price-op/--price");
-        }
         if (type != null) {
             return new TypeFilter(type);
         }
@@ -34,17 +28,7 @@ public final class FilterFactory {
         }
         if (priceOperator != null) {
             return new PriceFilter(priceOperator, price);
-        };
-        return NoOpFilter.NO_FILTER;
-    }
-
-    private static int count(boolean... flags) {
-        int matched = 0;
-        for (boolean flag : flags) {
-            if (flag) {
-                matched++;
-            }
         }
-        return matched;
+        return new NoOpFilter();
     }
 }

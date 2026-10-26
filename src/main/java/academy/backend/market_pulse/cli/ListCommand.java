@@ -38,6 +38,8 @@ public class ListCommand implements Callable<Integer> {
 
     @Override
     public Integer call() {
+        checkCriteria();
+
         InstrumentFilter filter = FilterFactory.create(type, ticker, currency, priceOperator, price);
 
         for (Instrument instrument : repository) {
@@ -46,5 +48,27 @@ public class ListCommand implements Callable<Integer> {
             }
         }
         return 0;
+    }
+
+    private static int count(boolean... flags) {
+        int matched = 0;
+        for (boolean flag : flags) {
+            if (flag) {
+                matched++;
+            }
+        }
+        return matched;
+    }
+
+    private void checkCriteria() {
+        int criteriaCount = count(type != null, ticker != null, currency != null, priceOperator != null);
+        if (criteriaCount > 1) {
+            throw new IllegalArgumentException(
+                    "Одновременно можно задать только один критерий отбора: --type, --ticker, --currency или "
+                            + "--price-op/--price");
+        }
+        if ((priceOperator != null && price == null) || (priceOperator == null && price != null)) {
+            throw new IllegalArgumentException("Параметры --price-op и --price должны передаваться вместе");
+        }
     }
 }
