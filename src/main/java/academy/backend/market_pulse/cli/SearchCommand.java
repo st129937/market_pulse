@@ -2,6 +2,7 @@ package academy.backend.market_pulse.cli;
 
 import java.util.concurrent.Callable;
 
+import academy.backend.market_pulse.model.Instrument;
 import academy.backend.market_pulse.repository.InstrumentRepository;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
@@ -20,14 +21,18 @@ public class SearchCommand implements Callable<Integer> {
 
     @Override
     public Integer call() {
-        return repository.findByTicker(ticker)
-                .map(instrument -> {
-                    System.out.println("Инструмент найден: " + instrument);
-                    return 1;
-                })
-                .orElseGet(() -> {
-                    System.out.println("Инструмент не найден: " + ticker);
-                    return 0;
-                });
+        Instrument found;
+        try {
+            found = repository.findByTicker(ticker).orElse(null);
+        } catch (NullPointerException e) {
+            throw new CliException("Тикер не может быть пустым", e);
+        }
+
+        if (found == null) {
+            System.out.println("Инструмент не найден: " + ticker);
+            return 0;
+        }
+        System.out.println("Инструмент найден: " + found);
+        return 1;
     }
 }

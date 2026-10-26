@@ -40,10 +40,31 @@ public class ListCommand implements Callable<Integer> {
     public Integer call() {
         checkCriteria();
 
+        if (type != null
+                && !type.equalsIgnoreCase("STOCK")
+                && !type.equalsIgnoreCase("BOND")
+                && !type.equalsIgnoreCase("ETF")) {
+            throw new CliException("Неизвестный тип инструмента: " + type
+                    + ". Допустимо: STOCK, BOND, ETF");
+        }
+
         InstrumentFilter filter = FilterFactory.create(type, ticker, currency, priceOperator, price);
 
+        try {
+            filter = FilterFactory.create(type, ticker, currency, priceOperator, price);
+        } catch (IllegalArgumentException | NullPointerException e) {
+            throw new CliException("Не получилось создать фильтр: " + e.getMessage(), e);
+        }
+
         for (Instrument instrument : repository) {
-            if (filter.matches(instrument)) {
+            boolean matched;
+            try {
+                matched = filter.matches(instrument);
+            } catch (RuntimeException e) {
+                throw new CliException(
+                        "Ошибка при фильтрации инструмента '" + instrument.getTicker() + "': " + e.getMessage(), e);
+            }
+            if (matched) {
                 System.out.println(instrument.getDescription());
             }
         }
@@ -63,12 +84,12 @@ public class ListCommand implements Callable<Integer> {
     private void checkCriteria() {
         int criteriaCount = count(type != null, ticker != null, currency != null, priceOperator != null);
         if (criteriaCount > 1) {
-            throw new IllegalArgumentException(
+            throw new CliException(
                     "Одновременно можно задать только один критерий отбора: --type, --ticker, --currency или "
                             + "--price-op/--price");
         }
         if ((priceOperator != null && price == null) || (priceOperator == null && price != null)) {
-            throw new IllegalArgumentException("Параметры --price-op и --price должны передаваться вместе");
+            throw new CliException("Параметры --price-op и --price должны передаваться вместе");
         }
     }
 }

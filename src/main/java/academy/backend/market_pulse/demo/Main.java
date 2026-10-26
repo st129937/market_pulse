@@ -1,9 +1,6 @@
 package academy.backend.market_pulse.demo;
 
-import academy.backend.market_pulse.cli.AddCommand;
-import academy.backend.market_pulse.cli.ListCommand;
-import academy.backend.market_pulse.cli.MarketPulseCli;
-import academy.backend.market_pulse.cli.SearchCommand;
+import academy.backend.market_pulse.cli.*;
 import academy.backend.market_pulse.model.Bond;
 import academy.backend.market_pulse.model.Currency;
 import academy.backend.market_pulse.model.Etf;
@@ -35,6 +32,26 @@ public class Main {
                 .addSubcommand(new SearchCommand(repository))
                 .addSubcommand(new AddCommand(repository))
                 .addSubcommand(new ListCommand(repository));
+
+        // обработка ошибки парсинга аргументов
+        cli.setParameterExceptionHandler((ex, cmdArgs) -> {
+            System.err.println("Ошибка в аргументах: " + ex.getMessage());
+            ex.getCommandLine().usage(System.err);
+            return CommandLine.ExitCode.USAGE;
+        });
+
+        // обработка ошибок выполнения команд
+        cli.setExecutionExceptionHandler((ex, commandLine, parseResult) -> {
+            if (ex instanceof CliException) {
+                System.err.println("Ошибка: " + ex.getMessage());
+            } else if (ex instanceof IllegalArgumentException) {
+                System.err.println("Ошибка: " + ex.getMessage());
+            } else {
+                System.err.println("Непредвиденная ошибка: " + ex.getMessage());
+            }
+            return CommandLine.ExitCode.SOFTWARE;
+        });
+
         int exitCode = cli.execute(args);
         System.exit(exitCode);
     }

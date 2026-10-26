@@ -33,6 +33,12 @@ public class AddCommand implements Callable<Integer> {
     @Override
     public Integer call() {
         Instrument instrument = InstrumentFactories.create(type, ticker, name, currency);
+        try {
+            instrument = InstrumentFactories.create(type, ticker, name, currency);
+        } catch (IllegalArgumentException | NullPointerException e) {
+            throw new CliException("Не получилось создать инструмент " + type + ": " + e.getMessage());
+        }
+
         repository.add(instrument);
         System.out.println("Добавлено: " + instrument.getDescription());
         return 0;
