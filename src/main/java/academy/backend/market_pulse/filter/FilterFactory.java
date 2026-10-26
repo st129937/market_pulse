@@ -1,7 +1,6 @@
 package academy.backend.market_pulse.filter;
 
 import academy.backend.market_pulse.model.Currency;
-import academy.backend.market_pulse.model.Stock;
 
 import java.math.BigDecimal;
 
@@ -18,44 +17,18 @@ public final class FilterFactory {
 
     public static InstrumentFilter create(String type, String ticker, Currency currency,
                                            PriceFilter.Operator priceOperator, BigDecimal price) {
-        int criteriaCount = count(type != null, ticker != null, currency != null, priceOperator != null);
-        if (criteriaCount > 1) {
-            throw new IllegalArgumentException(
-                    "Одновременно можно задать только один критерий отбора: --type, --ticker, --currency или "
-                            + "--price-op/--price");
-        }
         if (type != null) {
-            return i -> i.getType().equalsIgnoreCase(type);
+            return new TypeFilter(type);
         }
         if (ticker != null) {
-            return i -> i.getTicker().toUpperCase().contains(ticker.toUpperCase());
+            return new TickerFilter(ticker);
         }
         if (currency != null) {
-            return i -> i.getCurrency() == currency;
+            return new CurrencyFilter(currency);
         }
         if (priceOperator != null) {
-            return i -> {
-                if (!(i instanceof Stock stock)) {
-                    return false;
-                }
-                int comparison = stock.getDividendYield().compareTo(price);
-                return switch (priceOperator) {
-                    case GE -> comparison >= 0;
-                    case LE -> comparison <= 0;
-                    case EQ -> comparison == 0;
-                };
-            };
+            return new PriceFilter(priceOperator, price);
         }
-        return _ -> true;
-    }
-
-    private static int count(boolean... flags) {
-        int matched = 0;
-        for (boolean flag : flags) {
-            if (flag) {
-                matched++;
-            }
-        }
-        return matched;
+        return new NoOpFilter();
     }
 }
