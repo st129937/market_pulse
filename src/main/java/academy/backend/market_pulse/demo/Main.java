@@ -1,14 +1,15 @@
 package academy.backend.market_pulse.demo;
 
 import academy.backend.market_pulse.cli.*;
-import academy.backend.market_pulse.model.Bond;
-import academy.backend.market_pulse.model.Currency;
-import academy.backend.market_pulse.model.Etf;
-import academy.backend.market_pulse.model.Stock;
+import academy.backend.market_pulse.model.*;
 import academy.backend.market_pulse.repository.InstrumentRepository;
+import academy.backend.market_pulse.service.QuoteService;
+import academy.backend.market_pulse.source.QuoteSource;
 import picocli.CommandLine;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Точка входа CLI. Команды регистрируются вручную через {@code addSubcommand}, а не через
@@ -27,11 +28,28 @@ public class Main {
         repository.add(new Stock("SBER", "Сбербанк", Currency.RUB, "Финансы", new BigDecimal("6.5")));
         repository.add(new Etf("FXUS", "FinEx US", Currency.USD, "S&P 500"));
 
+        Map<String, Quote> quotes = new HashMap<>();
+        // заготовки котировок
+        quotes.put("SBER", new Quote(
+                repository.findByTicker("SBER").orElseThrow(),
+                new BigDecimal("250.5"),
+                new BigDecimal("1.25")));
+        quotes.put("SU26238", new Quote(
+                repository.findByTicker("SU26238").orElseThrow(),
+                new BigDecimal("100.0"),
+                new BigDecimal("-0.10")));
+        quotes.put("FXUS", new Quote(
+                repository.findByTicker("FXUS").orElseThrow(),
+                new BigDecimal("95.0"),
+                new BigDecimal("0.50")));
+        QuoteSource quoteSource = new QuoteSource(quotes);
+        QuoteService quoteService = new QuoteService(quoteSource);
 
         CommandLine cli = new CommandLine(new MarketPulseCli())
                 .addSubcommand(new SearchCommand(repository))
                 .addSubcommand(new AddCommand(repository))
-                .addSubcommand(new ListCommand(repository));
+                .addSubcommand(new ListCommand(repository))
+                .addSubcommand(new QuoteCommand(quoteService));
 
         // обработка ошибки парсинга аргументов
         cli.setParameterExceptionHandler((ex, cmdArgs) -> {
